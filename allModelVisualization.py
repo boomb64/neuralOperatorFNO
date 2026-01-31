@@ -17,7 +17,7 @@ MODEL_DIR = os.path.join(BASE_PATH, "model")
 
 # File Paths
 PATH_CNN = os.path.join(MODEL_DIR, "cnn_model.pth")
-PATH_FNO = os.path.join(MODEL_DIR, "naca_final_model_cpu.pth")
+PATH_FNO = os.path.join(MODEL_DIR, "fno_cpu_model.pth")
 PATH_PINN = os.path.join(MODEL_DIR, "pinn_model.pth")
 
 # Data Config
@@ -171,11 +171,28 @@ def main():
     else:
         print("[Missing] CNN weights")
 
-    # C. Manual FNO
-    fno_input = make_grid_input(geom_tensor)
+    # C. Manual FNO (Fixed for Padding)
     fno = load_manual_fno(PATH_FNO)
     with torch.no_grad():
-        fno_pred = fno(fno_input).cpu().numpy()[0, 0]
+        # 1. Manually pad the input to match training (224, 64)
+        target_h, target_w = 224, 64
+        pad_h = target_h - s1  # 224 - 221 = 3
+        pad_w = target_w - s2  # 64 - 51 = 13
+
+        # Pad: (left, right, top, bottom) -> (0, pad_w, 0, pad_h)
+        geom_padded = F.pad(geom_tensor, (0, pad_w, 0, pad_h))
+
+        # 2. Create the grid for the padded size
+        gridx = torch.linspace(0, 1, target_h, device=device).reshape(1, 1, target_h, 1).repeat([1, 1, 1, target_w])
+        gridy = torch.linspace(0, 1, target_w, device=device).reshape(1, 1, 1, target_w).repeat([1, 1, target_h, 1])
+        fno_input = torch.cat((geom_padded, gridx, gridy), dim=1)
+
+        # 3. Predict
+        fno_out_padded = fno(fno_input)
+
+        # 4. Crop back to original size (221, 51)
+        fno_pred = fno_out_padded[0, 0, :s1, :s2].cpu().numpy()
+
         models_to_plot.append(("Manual FNO", fno_pred))
 
     # D. PINN

@@ -247,7 +247,7 @@ final_model = FNO(
     non_linearity=torch.nn.GELU()
 ).to(device)
 
-final_model.load_state_dict(torch.load(FINAL_MODEL_FILENAME, map_location=device))
+final_model.load_state_dict(torch.load(FINAL_MODEL_FILENAME, map_location=device,weights_only=False))
 final_model.eval()
 
 with torch.no_grad():
