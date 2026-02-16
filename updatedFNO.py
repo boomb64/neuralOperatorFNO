@@ -1,10 +1,9 @@
 """
-MANUAL FNO IMPLEMENTATION (RTX 5070 - Float32)
+MANUAL FNO IMPLEMENTATION
 ------------------------------------------------------
-Fixes:
 1. Removed AMP (Mixed Precision): Fixes the cuFFT power-of-two error.
-2. Batch Size = 4: Fits in 12GB VRAM (consumes ~2GB).
-3. TF32 Enabled: Accelerates Float32 math on your 50-series card.
+2. Batch Size = 4
+3. TF32 Enabled: Accelerates Float32 math on gpu
 """
 
 import os
