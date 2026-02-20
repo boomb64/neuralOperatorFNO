@@ -36,11 +36,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--subsample_r', type=int, default=1,
                     help='Subsampling rate. 1=Full, 2=Half, 4=Quarter, etc.')
 parser.add_argument('--gold_model_path', type=str, default=None,
-                    help='Path to r=1 model. Defaults to ./model/naca_final_model_cpu.pth')
+                    help='Path to r=1 model. Defaults to ./model/naca_final_model.pth')
 args = parser.parse_args()
 
 r = args.subsample_r
-print(f"--- Running on CPU with Subsample Rate (r) = {r} ---")
+print(f"--- Running with Subsample Rate (r) = {r} ---")
 
 # ---------------------------------------
 # Configuration
@@ -48,7 +48,7 @@ print(f"--- Running on CPU with Subsample Rate (r) = {r} ---")
 torch.manual_seed(0)
 np.random.seed(0)
 
-device = torch.device("cpu")
+device = torch.device("cuda")
 print(f"Forcing device to: {device}")
 
 BASE_PATH = "."
@@ -60,16 +60,16 @@ os.makedirs(MODEL_PATH, exist_ok=True)
 os.makedirs(PLOTS_PATH, exist_ok=True)
 
 # Dynamic filenames
-FINAL_MODEL_FILENAME = os.path.join(MODEL_PATH, f"naca_fno_r{r}_cpu.pth")
-EXCEL_FILENAME = os.path.join(MODEL_PATH, f"naca_log_r{r}_cpu.xlsx")
-FINAL_PLOT_FILENAME = os.path.join(PLOTS_PATH, f"naca_plot_r{r}_cpu.png")
+FINAL_MODEL_FILENAME = os.path.join(MODEL_PATH, f"naca_fno_r{r}.pth")
+EXCEL_FILENAME = os.path.join(MODEL_PATH, f"naca_log_r{r}.xlsx")
+FINAL_PLOT_FILENAME = os.path.join(PLOTS_PATH, f"naca_plot_r{r}.png")
 
 # Gold Standard Path
 if args.gold_model_path:
     GOLD_MODEL_FILENAME = args.gold_model_path
 else:
     # Default to the name defined in your original snippet
-    GOLD_MODEL_FILENAME = os.path.join(MODEL_PATH, "naca_final_model_cpu.pth")
+    GOLD_MODEL_FILENAME = os.path.join(MODEL_PATH, "naca_final_model.pth")
 
 INPUT_X = os.path.join(DATA_PATH, "NACA_Cylinder_X.npy")
 INPUT_Y = os.path.join(DATA_PATH, "NACA_Cylinder_Y.npy")
@@ -218,7 +218,7 @@ loss_fn = LpLoss(d=2, p=2, reduction='sum')
 # Training Loop
 ################################################################
 training_history = []
-print(f"Starting training on CPU (r={r})...")
+print(f"Starting training (r={r})...")
 
 for ep in range(epochs):
     model.train()
@@ -352,10 +352,10 @@ with torch.no_grad():
     valid_h = s1
     valid_w = s2
 
-    X = x[0, 0, :valid_h, :valid_w].numpy()
-    Y = x[0, 1, :valid_h, :valid_w].numpy()
-    truth = y[0, 0, :valid_h, :valid_w].numpy()
-    pred = out[0, 0, :valid_h, :valid_w].numpy()
+    X = x[0, 0, :valid_h, :valid_w].cpu().numpy()
+    Y = x[0, 1, :valid_h, :valid_w].cpu().numpy()
+    truth = y[0, 0, :valid_h, :valid_w].cpu().numpy()
+    pred = out[0, 0, :valid_h, :valid_w].cpu().numpy()
 
     fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(16, 16))
     vmin, vmax = np.min(truth), np.max(truth)

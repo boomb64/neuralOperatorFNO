@@ -1,5 +1,5 @@
 """
-CPU-ONLY FNO REFERENCE IMPLEMENTATION
+FNO REFERENCE IMPLEMENTATION
 -------------------------------------
 Function:
     A streamlined implementation of the Fourier Neural Operator (FNO) specifically configured
@@ -35,17 +35,17 @@ from neuralop.losses import LpLoss
 torch.manual_seed(0)
 np.random.seed(0)
 
-# Force CPU
-device = torch.device("cpu")
+# Run on cuda if possible
+device = torch.device("cuda")
 print(f" forcing device to: {device}")
 
 BASE_PATH = "."
 MODEL_PATH = os.path.join(BASE_PATH, "model")
 DATA_PATH = os.path.join(BASE_PATH, "data", "naca")
 
-FINAL_MODEL_FILENAME = os.path.join(MODEL_PATH, "fno_cpu_model.pth")
-EXCEL_FILENAME = os.path.join(MODEL_PATH, "fno_training_log_cpu.xlsx")
-FINAL_PLOT_FILENAME = "fno_final_comparison_cpu.png"
+FINAL_MODEL_FILENAME = os.path.join(MODEL_PATH, "fno_model.pth")
+EXCEL_FILENAME = os.path.join(MODEL_PATH, "fno_training_log.xlsx")
+FINAL_PLOT_FILENAME = "fno_final_comparison.png"
 
 os.makedirs(MODEL_PATH, exist_ok=True)
 
@@ -163,11 +163,11 @@ scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=gamm
 loss_fn = LpLoss(d=2, p=2, reduction='sum')
 
 ################################################################
-# Training Loop (Standard CPU)
+# Training Loop
 ################################################################
 training_history = []
 
-print("Starting training on CPU...")
+print("Starting training...")
 
 for ep in range(epochs):
     model.train()
@@ -182,7 +182,7 @@ for ep in range(epochs):
 
         optimizer.zero_grad()
 
-        # Standard forward/backward (No AMP on CPU)
+        # Standard forward/backward
         out = model(x)
         loss = loss_fn(out, y)
 
@@ -261,10 +261,10 @@ with torch.no_grad():
     valid_h = 221
     valid_w = 51
 
-    X = x[0, 0, :valid_h, :valid_w].numpy()
-    Y = x[0, 1, :valid_h, :valid_w].numpy()
-    truth = y[0, 0, :valid_h, :valid_w].numpy()
-    pred = out[0, 0, :valid_h, :valid_w].numpy()
+    X = x[0, 0, :valid_h, :valid_w].cpu().numpy()
+    Y = x[0, 1, :valid_h, :valid_w].cpu().numpy()
+    truth = y[0, 0, :valid_h, :valid_w].cpu().numpy()
+    pred = out[0, 0, :valid_h, :valid_w].cpu().numpy()
 
     # Plotting
     fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(16, 16))
